@@ -66,7 +66,7 @@ def evaluate_model(
 
   return (metric_name, metric_value, json.dumps(metrics))
 
-def run_azure_pipeline(username: str, password: str, build_queue_url: str, definition_id: int, source_branch: str, 
+def run_azure_pipeline(username: str, password: str, build_queue_url: str, source_branch: str, 
 variable_groups_url: str,variable_group_name: str, run_id: str) -> int:
     """Returns 0 if success otherwise non zero number"""
     import requests
@@ -94,11 +94,24 @@ variable_groups_url: str,variable_group_name: str, run_id: str) -> int:
     try:
         response = requests.post(
             url=build_queue_url,
-            params={'api-version': 6.0,'definitionId':definition_id},
+            params={'api-version': '6.0-preview.1'},
             headers={'Content-Type': 'application/json'},
             auth = HTTPBasicAuth(username, password),
-            json = {'sourceBranch': source_branch}
+            json = { 'stagesToSkip':[],
+                    'resources':{
+                      'repositories': {
+                        'self': {
+                          'refName': source_branch
+                        }
+                      }
+                    },
+                    'templateParameters': {
+                      'kfpTrigger': source_branch
+                    },
+                    'variables': {}
+                  }
         )
+        
         response.raise_for_status()
     except HTTPError as http_err:
         print(f'HTTP error occurred: {http_err}')  # Python 3.6
