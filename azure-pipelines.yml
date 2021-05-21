@@ -7,7 +7,6 @@ trigger:
 - main
 - dev
 variables:
-  - group: kbf-pipeline-variables
 - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
   - name: PROJECT_ID
     value: facileai
@@ -22,6 +21,8 @@ variables:
     value: facileai-dev-gcr 
   - name: gcs.service.account.file
     value: facileai-dev-522ebf9e0a01.json 
+    
+- group: kbf-pipeline-variables
 
 stages:
 - stage: 'CI'
