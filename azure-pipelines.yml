@@ -1,0 +1,229 @@
+# Python package
+# Create and test a Python package on multiple Python versions.
+# Add steps that analyze code, save the dist with the build record, publish to a PyPI-compatible index, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+trigger:
+- main
+- dev
+variables:
+  - group: kbf-pipeline-variables
+- ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - name: PROJECT_ID
+    value: facileai
+  - name: container.registry
+    value: facileai-prod-gcr 
+  - name: gcs.service.account.file
+    value: facileai-prod-42da52855a20.json 
+- ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - name: PROJECT_ID
+    value: facileai-dev
+  - name: container.registry
+    value: facileai-dev-gcr 
+  - name: gcs.service.account.file
+    value: facileai-dev-522ebf9e0a01.json 
+
+stages:
+- stage: 'CI'
+  displayName: 'CI'
+  jobs:
+  - job: 'Build'
+    displayName: 'Build job'
+    pool:
+      vmImage: ubuntu-latest
+    strategy:
+      matrix:
+        Python37:
+          python.version: '3.7'
+
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(python.version)'
+      displayName: 'Use Python $(python.version)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
+
+    - task: GoogleCloudSdkInstaller@0
+      inputs:
+        version: '306.0.0'
+
+    - task: DownloadSecureFile@1
+      name: gcsServiceAccount
+      displayName: 'Download GCS Service Account'
+      inputs:
+        secureFile: $(gcs.service.account.file)
+
+    - task: GcloudRunner@0
+      inputs:
+        command: 'auth activate-service-account'
+        arguments: '--key-file $(gcsServiceAccount.secureFilePath)'
+      displayName: 'gcloud auth activate-service-account'
+      
+    - task: Docker@2
+      displayName: 'Build Base Image'
+      inputs:
+        containerRegistry: $(container.registry)
+        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        command: 'buildAndPush'
+        Dockerfile: 'base_image/Dockerfile'
+
+    - task: Docker@2
+      displayName: 'Build Training Image'
+      inputs:
+        containerRegistry: $(container.registry)
+        repository: '$(PROJECT_ID)/$(TRAINER_IMAGE_NAME)'
+        command: 'buildAndPush'
+        Dockerfile: 'trainer_image/Dockerfile'
+
+    - task: CmdLine@2
+      displayName: 'Compile pipeline manifest'
+      inputs:
+        script: |
+          dsl-compile --py  pipeline/predict_melbourne_house_pricing_pipeline.py --output $(Build.ArtifactStagingDirectory)/manifest.yaml
+      env:
+        USE_KFP_SA: False
+        BASE_IMAGE: gcr.io/$(PROJECT_ID)/$(BASE_IMAGE_NAME):$(Build.BuildId)
+        TRAINER_IMAGE: gcr.io/$(PROJECT_ID)/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
+        COMPONENT_URL_SEARCH_PREFIX: $(COMPONENT_URL_SEARCH_PREFIX)
+        RUNTIME_VERSION: 1.15
+        PYTHON_VERSION: 3.7
+        AZURE_DEVOPS_USERNAME: '#{{AZURE_DEVOPS_USERNAME}}#'
+        AZURE_DEVOPS_PASSWORD: '#{{AZURE_DEVOPS_PASSWORD}}#'
+        AZURE_DEVOPS_BUILD_URL: $(AZURE_DEVOPS_BUILD_URL)
+        AZURE_PIPELINE_DEFINITION_ID: $(AZURE_PIPELINE_DEFINITION_ID)
+        AZURE_PIPELINE_SOURCE_BRANCH: '#{{AZURE_PIPELINE_SOURCE_BRANCH}}#'
+        AZURE_PIPELINE_VARIABLE_GROUPS_URL: $(AZURE_PIPELINE_VARIABLE_GROUPS_URL)
+        AZURE_PIPELINE_VARIABLE_GROUP_NAME: '#{{AZURE_PIPELINE_VARIABLE_GROUP_NAME}}#'
+        
+
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+    
+        
+- stage: 'DEV_CD_PIPELINE'
+  displayName: 'DEV-PIPELINE'
+  dependsOn: 'CI'
+  jobs:
+  - deployment:
+    displayName: 'Submit pipeline to Dev cluster'
+    environment: 'facileai-kbf-dev'
+    variables:
+    - group: 'dev-kbf-release-variables'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.7'
+            displayName: 'Use Python 3.7'
+          - task: replacetokens@3
+            env:
+              AZURE_DEVOPS_PASSWORD: $(AZURE_DEVOPS_PASSWORD)
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/drop'
+              targetFiles: 'manifest.yaml'
+              tokenPrefix: '#{{'
+              tokenSuffix: '}}#'
+
+          - script: |
+              pip3 install --upgrade pip3
+              pip3 install kfp --upgrade
+            displayName: 'Install dependencies'
+
+          - task: GoogleCloudSdkInstaller@0
+            inputs:
+              version: '306.0.0'
+
+          - task: DownloadSecureFile@1
+            name: kfpDevServiceAccount
+            displayName: 'Download GCS Service Account'
+            inputs:
+              secureFile: $(gcs.service.account.file)
+
+          - task: GcloudRunner@0
+            inputs:
+              command: 'auth activate-service-account'
+              arguments: '--key-file $(kfpDevServiceAccount.secureFilePath)'
+            displayName: 'gcloud auth activate-service-account' 
+          
+          - task: CmdLine@2
+            displayName: 'Submit pipeline'
+            inputs:
+              script: |
+                ls -l $(Pipeline.Workspace)/drop
+                echo $(kfpDevServiceAccount.secureFilePath)
+                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/drop/manifest.yaml
+            env: 
+              GOOGLE_APPLICATION_CREDENTIALS: $(kfpDevServiceAccount.secureFilePath)
+
+- stage: 'PROD_CD_PIPELINE'
+  displayName: 'PROD-PIPELINE'
+  dependsOn: 'DEV_CD_PIPELINE'
+  jobs:
+  - deployment:
+    displayName: 'Submit pipeline to PROD cluster'
+    environment: 'facileai-kbf-prod'
+    variables:
+    - group: 'prod-kbf-release-variables'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.7'
+            displayName: 'Use Python 3.7'
+          - task: replacetokens@3
+            env:
+              AZURE_DEVOPS_PASSWORD: $(AZURE_DEVOPS_PASSWORD)
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/drop'
+              targetFiles: 'manifest.yaml'
+              tokenPrefix: '#{{'
+              tokenSuffix: '}}#'
+
+          - script: |
+              pip3 install --upgrade pip3
+              pip3 install kfp --upgrade
+            displayName: 'Install dependencies'
+
+          - task: GoogleCloudSdkInstaller@0
+            inputs:
+              version: '306.0.0'
+
+          - task: DownloadSecureFile@1
+            name: kfpDevServiceAccount
+            displayName: 'Download GCS Service Account'
+            inputs:
+              secureFile: $(gcs.service.account.file)
+
+          - task: GcloudRunner@0
+            inputs:
+              command: 'auth activate-service-account'
+              arguments: '--key-file $(kfpDevServiceAccount.secureFilePath)'
+            displayName: 'gcloud auth activate-service-account' 
+          
+          - task: CmdLine@2
+            displayName: 'Submit pipeline'
+            inputs:
+              script: |
+                ls -l $(Pipeline.Workspace)/drop
+                echo $(kfpDevServiceAccount.secureFilePath)
+                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/drop/manifest.yaml
+            env: 
+              GOOGLE_APPLICATION_CREDENTIALS: $(kfpDevServiceAccount.secureFilePath)
+
+                
+          
+
+
