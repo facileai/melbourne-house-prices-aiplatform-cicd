@@ -45,9 +45,9 @@ def load_pandas(fname):
 def get_data(train_data_pth,valid_data_pth,artifacts_path,job_dir):
     
     train_df = pd.read_csv(train_data_pth, low_memory=False)
-    valid_df = pd.read_csv(valid_data_pth, low_memory=False)
+    # valid_df = pd.read_csv(valid_data_pth, low_memory=False)
 
-    train_df = pd.concat([train_df, valid_df])
+    # train_df = pd.concat([train_df, valid_df])
 
     features = load_artifact(artifacts_path,'features.txt')
     cont_nn = features['cont']

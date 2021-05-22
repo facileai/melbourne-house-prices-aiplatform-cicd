@@ -7,14 +7,15 @@ trigger:
 - main
 - dev
 variables:
-  - group: kbf-pipeline-variables
 - ${{ if eq(variables['Build.SourceBranch'], 'refs/heads/main') }}:
   - name: PROJECT_ID
     value: facileai
   - name: container.registry
     value: facileai-prod-gcr 
   - name: gcs.service.account.file
-    value: facileai-prod-42da52855a20.json 
+    value: facileai-prod-42da52855a20.json
+  - name: deploy.service.account.file
+    value: facileai-prod-pipeline-25ca43146d14.json  
 - ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
   - name: PROJECT_ID
     value: facileai-dev
@@ -22,6 +23,10 @@ variables:
     value: facileai-dev-gcr 
   - name: gcs.service.account.file
     value: facileai-dev-522ebf9e0a01.json 
+  - name: deploy.service.account.file
+    value: facileai-dev-pipeline-88a8e10754d9.json 
+    
+- group: kbf-pipeline-variables
 
 stages:
 - stage: 'CI'
@@ -96,7 +101,7 @@ stages:
         AZURE_DEVOPS_BUILD_URL: $(AZURE_DEVOPS_BUILD_URL)
         AZURE_PIPELINE_DEFINITION_ID: $(AZURE_PIPELINE_DEFINITION_ID)
         AZURE_PIPELINE_SOURCE_BRANCH: '#{{AZURE_PIPELINE_SOURCE_BRANCH}}#'
-        AZURE_PIPELINE_VARIABLE_GROUPS_URL: $(AZURE_PIPELINE_VARIABLE_GROUPS_URL)
+        AZURE_PIPELINE_VARIABLE_GROUPS_URL: '#{{AZURE_PIPELINE_VARIABLE_GROUPS_URL}}#'
         AZURE_PIPELINE_VARIABLE_GROUP_NAME: '#{{AZURE_PIPELINE_VARIABLE_GROUP_NAME}}#'
         
 
@@ -147,7 +152,7 @@ stages:
             name: kfpDevServiceAccount
             displayName: 'Download GCS Service Account'
             inputs:
-              secureFile: $(gcs.service.account.file)
+              secureFile: $(deploy.service.account.file)
 
           - task: GcloudRunner@0
             inputs:
@@ -205,7 +210,7 @@ stages:
             name: kfpDevServiceAccount
             displayName: 'Download GCS Service Account'
             inputs:
-              secureFile: $(gcs.service.account.file)
+              secureFile: $(deploy.service.account.file)
 
           - task: GcloudRunner@0
             inputs:
