@@ -66,23 +66,61 @@ stages:
         arguments: '--key-file $(gcsServiceAccount.secureFilePath)'
       displayName: 'gcloud auth activate-service-account'
       
+    # - task: Docker@2
+    #   displayName: 'Build Base Image'
+    #   inputs:
+    #     containerRegistry: $(container.registry)
+    #     repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+    #     command: 'buildAndPush'
+    #     Dockerfile: 'base_image/Dockerfile'
+    
     - task: Docker@2
       displayName: 'Build Base Image'
       inputs:
-        containerRegistry: $(container.registry)
-        # repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
-        repository: 'gakuba/$(BASE_IMAGE_NAME)'
-        command: 'buildAndPush'
+        command: 'build'
         Dockerfile: 'base_image/Dockerfile'
 
     - task: Docker@2
-      displayName: 'Build Training Image'
+      displayName: 'Push Base Image to Dev Registry'
       inputs:
-        containerRegistry: $(container.registry)
-        # repository: '$(PROJECT_ID)/$(TRAINER_IMAGE_NAME)'
-        repository: 'gakuba/$(TRAINER_IMAGE_NAME)'
-        command: 'buildAndPush'
+        containerRegistry: 'facileai-dev-gcr'
+        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        command: 'push'
+    
+    - task: Docker@2
+      displayName: 'Push Base Image to Prod Registry'
+      inputs:
+        containerRegistry: 'facileai-prod-gcr'
+        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        command: 'push'
+
+    # - task: Docker@2
+    #   displayName: 'Build Training Image'
+    #   inputs:
+    #     containerRegistry: $(container.registry)
+    #     repository: '$(PROJECT_ID)/$(TRAINER_IMAGE_NAME)'
+    #     command: 'buildAndPush'
+    #     Dockerfile: 'trainer_image/Dockerfile'
+        
+    - task: Docker@2
+      displayName: 'Build Trainer Image'
+      inputs:
+        command: 'build'
         Dockerfile: 'trainer_image/Dockerfile'
+
+    - task: Docker@2
+      displayName: 'Push Trainer Image to Dev Registry'
+      inputs:
+        containerRegistry: 'facileai-dev-gcr'
+        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        command: 'push'
+      
+    - task: Docker@2
+      displayName: 'Push Trainer Image to Prod Registry'
+      inputs:
+        containerRegistry: 'facileai-prod-gcr'
+        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        command: 'push'
 
     - task: CmdLine@2
       displayName: 'Compile pipeline manifest'
@@ -92,9 +130,9 @@ stages:
       env:
         USE_KFP_SA: False
         # BASE_IMAGE: gcr.io/$(PROJECT_ID)/$(BASE_IMAGE_NAME):$(Build.BuildId)
-        BASE_IMAGE: index.docker.io/v1/gakuba/$(BASE_IMAGE_NAME):$(Build.BuildId)
         # TRAINER_IMAGE: gcr.io/$(PROJECT_ID)/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
-        TRAINER_IMAGE: index.docker.io/v1/gakuba/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
+        BASE_IMAGE: '#{{BASE_IMAGE}}#'
+        TRAINER_IMAGE: '#{{TRAINER_IMAGE}}#'
         COMPONENT_URL_SEARCH_PREFIX: $(COMPONENT_URL_SEARCH_PREFIX)
         RUNTIME_VERSION: 1.15
         PYTHON_VERSION: 3.7
@@ -122,6 +160,10 @@ stages:
     displayName: 'Submit pipeline to Dev cluster'
     environment: 'facileai-kbf-dev'
     variables:
+    - name: BASE_IMAGE
+      value: gcr.io/facileai-dev/base_image:$(Build.BuildId)
+    - name: TRAINER_IMAGE
+      value: gcr.io/facileai-dev/trainer_image:$(Build.BuildId)
     - group: 'dev-kbf-release-variables'
     # - name: deploy.service.account.file
     #   value: facileai-dev-pipeline-88a8e10754d9.json
@@ -182,6 +224,10 @@ stages:
     displayName: 'Submit pipeline to PROD cluster'
     environment: 'facileai-kbf-prod'
     variables:
+    - name: BASE_IMAGE
+      value: gcr.io/facileai/base_image:$(Build.BuildId)
+    - name: TRAINER_IMAGE
+      value: gcr.io/facileai/trainer_image:$(Build.BuildId)
     - group: 'prod-kbf-release-variables'
     # - name: deploy.service.account.file
     #   value: facileai-prod-pipeline-25ca43146d14.json  
