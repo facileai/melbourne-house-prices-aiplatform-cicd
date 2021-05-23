@@ -146,7 +146,7 @@ stages:
               script: |
                 ls -l $(Pipeline.Workspace)/dev_drop
                 echo $(kfpDevServiceAccount.secureFilePath)
-                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/drop/manifest.yaml
+                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/dev_drop/manifest.yaml
             env: 
               GOOGLE_APPLICATION_CREDENTIALS: $(kfpDevServiceAccount.secureFilePath)
 
@@ -287,7 +287,7 @@ stages:
               script: |
                 ls -l $(Pipeline.Workspace)/prod_drop
                 echo $(kfpDevServiceAccount.secureFilePath)
-                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/drop/manifest.yaml
+                kfp --endpoint $ENDPOINT pipeline upload -p melbourne-house-pricing-pipeline-$(Build.BuildId) $(Pipeline.Workspace)/prod_drop/manifest.yaml
             env: 
               GOOGLE_APPLICATION_CREDENTIALS: $(kfpDevServiceAccount.secureFilePath)
 
