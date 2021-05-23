@@ -79,19 +79,20 @@ stages:
       inputs:
         command: 'build'
         Dockerfile: 'base_image/Dockerfile'
+        tags: facileai-dev/base_image,facileai/base_image
 
     - task: Docker@2
       displayName: 'Push Base Image to Dev Registry'
       inputs:
         containerRegistry: 'facileai-dev-gcr'
-        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        repository: 'facileai-dev/$(BASE_IMAGE_NAME)'
         command: 'push'
     
     - task: Docker@2
       displayName: 'Push Base Image to Prod Registry'
       inputs:
         containerRegistry: 'facileai-prod-gcr'
-        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        repository: 'facileai/$(BASE_IMAGE_NAME)'
         command: 'push'
 
     # - task: Docker@2
