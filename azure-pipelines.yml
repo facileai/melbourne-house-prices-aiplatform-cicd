@@ -19,7 +19,7 @@ variables:
   - name: PROJECT_ID
     value: facileai-dev
   - name: container.registry
-    value: facileai-dev-gcr 
+    value: dockerhub-registry 
   - name: gcs.service.account.file
     value: facileai-dev-522ebf9e0a01.json 
   
