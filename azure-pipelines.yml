@@ -14,8 +14,7 @@ variables:
     value: facileai-prod-gcr 
   - name: gcs.service.account.file
     value: facileai-prod-42da52855a20.json
-  - name: deploy.service.account.file
-    value: facileai-prod-pipeline-25ca43146d14.json  
+  
 - ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
   - name: PROJECT_ID
     value: facileai-dev
@@ -23,8 +22,7 @@ variables:
     value: facileai-dev-gcr 
   - name: gcs.service.account.file
     value: facileai-dev-522ebf9e0a01.json 
-  - name: deploy.service.account.file
-    value: facileai-dev-pipeline-88a8e10754d9.json 
+  
     
 - group: kbf-pipeline-variables
 
@@ -121,6 +119,8 @@ stages:
     environment: 'facileai-kbf-dev'
     variables:
     - group: 'dev-kbf-release-variables'
+    - name: deploy.service.account.file
+      value: facileai-dev-pipeline-88a8e10754d9.json
     strategy:
       runOnce:
         deploy:
@@ -179,6 +179,8 @@ stages:
     environment: 'facileai-kbf-prod'
     variables:
     - group: 'prod-kbf-release-variables'
+    - name: deploy.service.account.file
+      value: facileai-prod-pipeline-25ca43146d14.json  
     strategy:
       runOnce:
         deploy:
