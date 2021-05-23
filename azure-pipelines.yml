@@ -89,8 +89,10 @@ stages:
           dsl-compile --py  pipeline/predict_melbourne_house_pricing_pipeline.py --output $(Build.ArtifactStagingDirectory)/manifest.yaml
       env:
         USE_KFP_SA: False
-        BASE_IMAGE: gcr.io/$(PROJECT_ID)/$(BASE_IMAGE_NAME):$(Build.BuildId)
-        TRAINER_IMAGE: gcr.io/$(PROJECT_ID)/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
+        # BASE_IMAGE: gcr.io/$(PROJECT_ID)/$(BASE_IMAGE_NAME):$(Build.BuildId)
+        BASE_IMAGE: index.docker.io/v1/$(PROJECT_ID)/$(BASE_IMAGE_NAME):$(Build.BuildId)
+        # TRAINER_IMAGE: gcr.io/$(PROJECT_ID)/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
+        TRAINER_IMAGE: index.docker.io/v1/$(PROJECT_ID)/$(TRAINER_IMAGE_NAME):$(Build.BuildId)
         COMPONENT_URL_SEARCH_PREFIX: $(COMPONENT_URL_SEARCH_PREFIX)
         RUNTIME_VERSION: 1.15
         PYTHON_VERSION: 3.7
