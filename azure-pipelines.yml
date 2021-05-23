@@ -194,7 +194,7 @@ stages:
       displayName: 'Build Base Image'
       inputs:
         containerRegistry: facileai-prod-gcr
-        repository: '$(PROJECT_ID)/$(BASE_IMAGE_NAME)'
+        repository: 'facileai/$(BASE_IMAGE_NAME)'
         command: 'buildAndPush'
         Dockerfile: 'base_image/Dockerfile'
 
@@ -202,7 +202,7 @@ stages:
       displayName: 'Build Training Image'
       inputs:
         containerRegistry: facileai-prod-gcr
-        repository: '$(PROJECT_ID)/$(TRAINER_IMAGE_NAME)'
+        repository: 'facileai/$(TRAINER_IMAGE_NAME)'
         command: 'buildAndPush'
         Dockerfile: 'trainer_image/Dockerfile'
 
