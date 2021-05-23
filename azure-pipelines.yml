@@ -119,8 +119,8 @@ stages:
     environment: 'facileai-kbf-dev'
     variables:
     - group: 'dev-kbf-release-variables'
-    - name: deploy.service.account.file
-      value: facileai-dev-pipeline-88a8e10754d9.json
+    # - name: deploy.service.account.file
+    #   value: facileai-dev-pipeline-88a8e10754d9.json
     strategy:
       runOnce:
         deploy:
@@ -152,7 +152,7 @@ stages:
             name: kfpDevServiceAccount
             displayName: 'Download GCS Service Account'
             inputs:
-              secureFile: $(deploy.service.account.file)
+              secureFile: facileai-dev-pipeline-88a8e10754d9.json
 
           - task: GcloudRunner@0
             inputs:
@@ -179,8 +179,8 @@ stages:
     environment: 'facileai-kbf-prod'
     variables:
     - group: 'prod-kbf-release-variables'
-    - name: deploy.service.account.file
-      value: facileai-prod-pipeline-25ca43146d14.json  
+    # - name: deploy.service.account.file
+    #   value: facileai-prod-pipeline-25ca43146d14.json  
     strategy:
       runOnce:
         deploy:
@@ -212,7 +212,7 @@ stages:
             name: kfpDevServiceAccount
             displayName: 'Download GCS Service Account'
             inputs:
-              secureFile: $(deploy.service.account.file)
+              secureFile: facileai-prod-pipeline-25ca43146d14.json
 
           - task: GcloudRunner@0
             inputs:
