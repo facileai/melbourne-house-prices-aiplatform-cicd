@@ -90,6 +90,7 @@ stages:
         AZURE_PIPELINE_SOURCE_BRANCH: '#{{AZURE_PIPELINE_SOURCE_BRANCH}}#'
         AZURE_PIPELINE_VARIABLE_GROUPS_URL: '#{{AZURE_PIPELINE_VARIABLE_GROUPS_URL}}#'
         AZURE_PIPELINE_VARIABLE_GROUP_NAME: '#{{AZURE_PIPELINE_VARIABLE_GROUP_NAME}}#'
+        AZURE_BUILD_ID: $(Build.BuildId)
 
     - task: PublishBuildArtifacts@1
       inputs:
@@ -196,6 +197,12 @@ stages:
         arguments: '--key-file $(gcsServiceAccount.secureFilePath)'
       displayName: 'gcloud auth activate-service-account'
       
+    - task: GsutilRunner@0
+      inputs:
+        command: 'cp'
+        arguments: './*.txt gs://facileai-kubeflowpipelines-default/staging/artifacts/$(Build.BuildId)'
+        workingDirectory: 'artifacts'
+      displayName: 'Submit artifacts to GCS'
     - task: Docker@2
       displayName: 'Build Base Image'
       inputs:
@@ -231,6 +238,7 @@ stages:
         AZURE_PIPELINE_SOURCE_BRANCH: '#{{AZURE_PIPELINE_SOURCE_BRANCH}}#'
         AZURE_PIPELINE_VARIABLE_GROUPS_URL: '#{{AZURE_PIPELINE_VARIABLE_GROUPS_URL}}#'
         AZURE_PIPELINE_VARIABLE_GROUP_NAME: '#{{AZURE_PIPELINE_VARIABLE_GROUP_NAME}}#'
+        AZURE_BUILD_ID: $(Build.BuildId)
         
 
     - task: PublishBuildArtifacts@1
