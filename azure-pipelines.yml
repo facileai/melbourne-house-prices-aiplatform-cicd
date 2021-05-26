@@ -52,7 +52,7 @@ stages:
     - task: GsutilRunner@0
       inputs:
         command: 'cp'
-        arguments: './*.txt gs://facileai-dev-kubeflowpipelines-default/staging/artifacts'
+        arguments: './*.txt gs://facileai-dev-kubeflowpipelines-default/staging/artifacts/$(Build.BuildId)'
         workingDirectory: 'artifacts'
       displayName: 'Submit artifacts to GCS'
 
