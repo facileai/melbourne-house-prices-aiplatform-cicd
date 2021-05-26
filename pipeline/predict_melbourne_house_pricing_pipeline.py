@@ -11,6 +11,7 @@ TRAINER_IMAGE = os.getenv('TRAINER_IMAGE')
 RUNTIME_VERSION = os.getenv('RUNTIME_VERSION')
 PYTHON_VERSION = os.getenv('PYTHON_VERSION')
 COMPONENT_URL_SEARCH_PREFIX = os.getenv('COMPONENT_URL_SEARCH_PREFIX')
+AZURE_BUILD_ID = os.getenv('AZURE_BUILD_ID')
 USE_KFP_SA = os.getenv('USE_KFP_SA')
 if USE_KFP_SA == 'True':
     USE_KFP_SA = True
@@ -60,7 +61,7 @@ def covid_deaths_train(project_id,
 
     # Train the model on a combined training and validation datasets
     job_dir = '{}/{}/{}'.format(gcs_root, 'jobdir', kfp.dsl.RUN_ID_PLACEHOLDER)
-    artifacts_dir = '{}/{}'.format(gcs_root, 'artifacts')
+    artifacts_dir = '{}/{}/{}'.format(gcs_root, 'artifacts',AZURE_BUILD_ID)
    
     train_args = [
         '--training_dataset_path',
