@@ -1,1 +1,1 @@
-{"booster": "gbtree", "subsample": 0.568005772155629, "colsample_bytree": 0.6822016181970123, "n_estimators": 194, "max_depth": 14, "min_child_weight": 10.383679466106374, "eta": 0.03325850358342672}
+{"booster": "gbtree", "subsample": 0.709342055868656, "colsample_bytree": 0.4554563366576581, "n_estimators": 200, "max_depth": 16, "min_child_weight": 13.757995766256757, "eta": 0.0371877471223568}
