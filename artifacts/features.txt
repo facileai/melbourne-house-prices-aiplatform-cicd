@@ -1,1 +1,1 @@
-{"cat": ["Suburb", "Postcode", "Street", "Type", "Method", "SellerG", "Regionname", "CouncilArea"], "cont": ["Rooms", "Propertycount", "Distance", "Date_cpElapsed"], "dep_var": "Price"}
+{"cat": ["Suburb", "Postcode", "Street", "Type", "SellerG", "Regionname", "CouncilArea"], "cont": ["Rooms", "Propertycount", "Distance", "Date_cpElapsed"], "dep_var": "Price"}
