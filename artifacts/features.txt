@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"cat": ["Suburb", "Postcode", "Street", "Type", "SellerG", "Regionname", "CouncilArea"], "cont": ["Rooms", "Propertycount", "Distance", "Date_cpElapsed"], "dep_var": "Price"}
+=======
+{"cat": ["Suburb", "Postcode", "Street", "Type", "SellerG", "Regionname", "CouncilArea"], "cont": ["Rooms", "Propertycount", "Distance", "Date_cpElapsed"], "dep_var": "Price"}
+>>>>>>> 6383f5fdf5f852b5f9ed9aef2aa61de758748b9b
